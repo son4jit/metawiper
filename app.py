@@ -1,4 +1,4 @@
-import streamlit as st
+from flask import Flask, render_template, request, send_file, jsonify
 from PIL import Image, UnidentifiedImageError
 import io
 import os
@@ -10,118 +10,120 @@ from utils.metadata_tools import (
     strip_exif
 )
 
-st.set_page_config(
-    page_title="MetaWiper | Metadata Viewer & Shredder",
-    page_icon="assests/favicon.ico",
-    layout="centered"
+# ---- Flask app ----
+app = Flask(
+    __name__,
+    template_folder="templates",
+    static_folder="static"
 )
 
-# Use theme-based colors instead of hardcoded
-st.markdown("""
-    <style>
-        .stApp {
-            font-family: 'Segoe UI', sans-serif;
-        }
-        h1, h2, h3, h4 {
-            color: var(--text-color);
-            text-align: center;
-        }
-        .upload-box {
-            border: 2px dashed var(--text-color);
-            padding: 24px;
-            border-radius: 12px;
-            background-color: var(--block-background-color);
-            transition: all 0.3s ease-in-out;
-        }
-        .metadata-section {
-            padding: 20px;
-            border-radius: 12px;
-            background-color: var(--block-background-color);
-            box-shadow: 0px 2px 4px rgba(0,0,0,0.05);
-            margin-bottom: 24px;
-        }
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-        }
-        .btn-primary:hover {
-            opacity: 0.9;
-        }
-    </style>
-""", unsafe_allow_html=True)
+# 200MB upload limit
+app.config["MAX_CONTENT_LENGTH"] = 200 * 1024 * 1024
 
-# --- App Title ---
-st.markdown("## MetaWiper – Metadata Viewer & Shredder")
-st.markdown("<p style='text-align:center;'>Protect your privacy by removing hidden metadata (Exif) from images before sharing.</p>", unsafe_allow_html=True)
 
-# --- File Upload UI ---
-st.markdown('<div class="upload-box">', unsafe_allow_html=True)
-uploaded_file = st.file_uploader(
-    "📤 Drag & drop or click to upload an image (JPEG, PNG, WebP, TIFF, BMP)",
-    type=["jpg", "jpeg", "png", "webp", "tiff", "bmp"]
-)
-st.markdown('</div>', unsafe_allow_html=True)
+# ---- Routes ----
+@app.route("/", methods=["GET", "POST"])
+def index():
+    result = {}
 
-# --- Image Processing ---
-if uploaded_file is not None:
+    if request.method == "POST":
+        # Check for AJAX header OR form flag
+        is_ajax = (request.headers.get("X-Requested-With") == "XMLHttpRequest") or (request.form.get("ajax") == "true")
+
+        file = request.files.get("image")
+
+        if not file or file.filename == "":
+            result["error"] = "No file uploaded"
+            if is_ajax:
+                return jsonify(result), 400
+            return render_template("index.html", result=result)
+
+        try:
+            file_bytes = file.read()
+            Image.MAX_IMAGE_PIXELS = None
+
+            # Open image to verify it's valid
+            image = Image.open(io.BytesIO(file_bytes))
+            image_format = image.format or "JPEG"
+            image.load()
+
+            raw_exif = extract_exif(image)
+            formatted_exif = format_metadata(raw_exif)
+
+            result = {
+                "hash": get_sha256_hash(file_bytes),
+                "metadata": formatted_exif,
+                "filename": file.filename,
+                "format": image_format
+            }
+
+            if is_ajax:
+                return jsonify(result)
+
+        except UnidentifiedImageError:
+            result["error"] = "Unsupported or corrupted image file"
+            if is_ajax:
+                return jsonify(result), 400
+
+        except Exception as e:
+            result["error"] = f"Failed to process image: {str(e)}"
+            if is_ajax:
+                return jsonify(result), 500
+
+    return render_template("index.html", result=result)
+
+
+@app.route("/strip", methods=["POST"])
+def strip_metadata():
+    file = request.files.get("image")
+
+    if not file or file.filename == "":
+        return "No file uploaded", 400
+
     try:
-        file_bytes = uploaded_file.read()
-        image = Image.open(io.BytesIO(file_bytes))
+        image = Image.open(file.stream)
+        image.load()
 
-        st.image(image, caption="🖼️ Uploaded Image", use_container_width=True)
+        clean_buffer = strip_exif(image)
 
-        # File Hash
-        st.markdown('<div class="metadata-section">', unsafe_allow_html=True)
-        st.markdown("### 🔐 File Hash (SHA-256)")
-        st.code(get_sha256_hash(file_bytes), language="bash")
-        st.markdown('</div>', unsafe_allow_html=True)
+        filename, ext = os.path.splitext(file.filename)
+        ext = ext.lower() if ext else ".jpg"
 
-        # Metadata View
-        st.markdown('<div class="metadata-section">', unsafe_allow_html=True)
-        st.markdown("### 📋 Image Metadata (Exif)")
-        raw_exif = extract_exif(image)
-        if raw_exif:
-            formatted = format_metadata(raw_exif)
-            has_data = False
-            for section, tags in formatted.items():
-                if tags:
-                    has_data = True
-                    with st.expander(f"📂 {section}"):
-                        if isinstance(tags, dict):
-                            for k, v in tags.items():
-                                st.markdown(f"- **{k}**: {v}")
-                        else:
-                            st.markdown(f"- {tags}")
-            if not has_data:
-                st.info("No visible metadata found in this image.")
-        else:
-            st.warning("No Exif metadata available.")
-        st.markdown('</div>', unsafe_allow_html=True)
+        mimetype = f"image/{ext.replace('.', '')}"
+        if ext in [".jpg", ".jpeg"]:
+            mimetype = "image/jpeg"
 
-        # Metadata Strip
-        st.markdown('<div class="metadata-section">', unsafe_allow_html=True)
-        st.markdown("### 🧹 Remove Metadata")
-        if st.button("Strip Metadata & Prepare Clean Image"):
-            clean_image = strip_exif(image)
-            st.success("✅ Metadata removed successfully!")
+        return send_file(
+            clean_buffer,
+            as_attachment=True,
+            download_name=f"{filename}_cleaned{ext}",
+            mimetype=mimetype
+        )
 
-            original_filename = os.path.splitext(uploaded_file.name)[0]
-            cleaned_ext = image.format.lower() or "jpg"
-            cleaned_filename = f"{original_filename}_cleaned.{cleaned_ext}"
+    except Exception as e:
+        return f"Failed to clean image: {str(e)}", 500
 
-            st.download_button(
-                label="📥 Download Clean Image",
-                data=clean_image,
-                file_name=cleaned_filename,
-                mime=f"image/{cleaned_ext}"
-            )
-        st.markdown('</div>', unsafe_allow_html=True)
 
-    except UnidentifiedImageError:
-        st.error("❌ Uploaded file is not a valid image.")
-else:
-    st.info("🧭 Please upload a supported image to begin.")
+# ---- Error Handlers ----
+@app.errorhandler(Exception)
+def handle_exception(e):
+    # Pass through HTTP errors
+    if isinstance(e, UnidentifiedImageError):
+        return jsonify({"error": "Corrupted or unsupported image file"}), 400
+        
+    # Generic error handling
+    is_ajax = (request.headers.get("X-Requested-With") == "XMLHttpRequest") or (request.form.get("ajax") == "true")
+    if is_ajax:
+        return jsonify({"error": f"Server Error: {str(e)}"}), 500
+        
+    return f"Server Error: {str(e)}", 500
+
+# ---- Run locally ----
+if __name__ == "__main__":
+    app.run(
+        host="0.0.0.0",
+        port=5000,
+        debug=True,
+        threaded=True,
+        use_reloader=True
+    )

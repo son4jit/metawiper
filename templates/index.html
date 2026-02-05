@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>MetaWiper • Privacy-First Metadata Cleaner</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='../assests/favicon.png') }}">
+
+    <!-- Meta Tags -->
+    <meta name="description"
+        content="Securely view and shred hidden metadata from your images. No logs, no storage, pure browser-to-memory processing.">
+    <meta name="theme-color" content="#05070a">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <canvas id="particles"></canvas>
+
+    <main class="container">
+
+        <!-- Premium Header -->
+        <header class="header">
+            <h1>MetaWiper</h1>
+            <p>The privacy-first shredder for hidden image metadata. Strip EXIF, GPS, and device signatures in seconds.
+            </p>
+        </header>
+
+        <!-- Main Interaction Card -->
+        <section class="card">
+            <form method="POST" enctype="multipart/form-data" id="mainForm">
+                <label class="upload-zone" id="uploadBox">
+                    <input type="file" name="image" id="fileInput" accept=".jpg,.jpeg,.png,.webp,.tiff,.bmp" multiple
+                        required style="display: none !important;" class="hidden">
+                    <div class="upload-content">
+                        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <strong>Drop your images here</strong>
+                        <span>or click to browse from device</span>
+                    </div>
+                </label>
+
+                <!-- Dynamic Preview Container -->
+                <div id="previewContainer" class="preview-area hidden"></div>
+
+                <div style="text-align: center; color: #64748b; font-size: 0.875rem; margin: 1.5rem 0;">
+                    Supports JPG, PNG, WEBP, TIFF, BMP • Encrypted In-Memory Processing
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="analyzeBtn">
+                    Analyze Metadata
+                </button>
+            </form>
+        </section>
+
+        <!-- Dynamic Results Surface -->
+        <div id="resultsArea">
+            {% if result.hash %}
+            <section class="card">
+                <h2>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                    Digital Signature (SHA-256)
+                </h2>
+                <div class="code-block">{{ result.hash }}</div>
+            </section>
+
+            <section class="card">
+                <h2>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    Extracted Metadata
+                </h2>
+
+                {% for section, tags in result.metadata.items() %}
+                {% if tags and tags is mapping %}
+                <details class="metadata-section">
+                    <summary>{{ section }}</summary>
+                    <dl class="metadata-list">
+                        {% for k, v in tags.items() %}
+                        <article class="metadata-item">
+                            <dt>{{ k }}</dt>
+                            <dd>{{ v }}</dd>
+                        </article>
+                        {% endfor %}
+                    </dl>
+                </details>
+                {% elif tags %}
+                <div style="margin-top: 1rem; color: #94a3b8; font-style: italic;">
+                    <div class="metadata-info">
+                        {{ tags }}
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+            </section>
+
+            <section class="card sanitize-card">
+                <h2 class="sanitize-heading">Sanitization Ready</h2>
+
+                <form action="/strip" method="POST" enctype="multipart/form-data">
+                    <input type="file" name="image" id="cleanFile" hidden required class="hidden">
+                    <label for="cleanFile" id="cleanFileLabel" class="btn confirm-shred-btn">
+                        Confirm "{{ result.filename }}" to Shred
+                    </label>
+                    <button type="submit" class="btn btn-primary"
+                        style="background: #ef4444; color: #fff; box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Download Shredded Image
+                    </button>
+                </form>
+            </section>
+            {% endif %}
+        </div>
+
+        {% if result.error %}
+        <div class="card" style="border-color: #ef4444; background: rgba(239, 68, 68, 0.05);">
+            <div style="display: flex; align-items: center; gap: 1rem; color: #fca5a5;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span>{{ result.error }}</span>
+            </div>
+        </div>
+        {% endif %}
+
+    </main>
+
+    <footer style="text-align: center; padding: 4rem 2rem; color: #475569; font-size: 0.875rem;">
+        MetaWiper &bull; Managed by <a href="https://sonajit.in" target="_blank"
+            style="color: var(--accent-blue); text-decoration: none;">sonajit.in</a> &bull; 2026
+    </footer>
+
+    <script src="{{ url_for('static', filename='particles.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='ui.js') }}" defer></script>
+
+</body>
+
+</html>
