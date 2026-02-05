@@ -1,21 +1,46 @@
-# Python
+# === MetaWiper Git Ignore ===
+
+# Python Byte-compiled / Optimized / DLL files
 __pycache__/
 *.py[cod]
+*$py.class
 *.pyo
 *.pyd
-*.log
 
-# Virtual environments
-env/
+# Virtual Environments
 venv/
+env/
 .venv/
+ENV/
+build/
+dist/
+*.egg-info/
 
-# System
+# Logs
+*.log
+pip-log.txt
+pip-delete-this-directory.txt
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# OS / System
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# Streamlit cache
-.streamlit/config.toml
-.streamlit/*.json
+# Flask / Application
+instance/
+.env
+.flaskenv
+*.db
+*.sqlite
+
+# Project Specific
 .cache/
- 
+.streamlit/
