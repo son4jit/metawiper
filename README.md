@@ -1,135 +1,109 @@
-# MetaWiper – Image Metadata Viewer & Shredder
+# MetaWiper • Privacy-First Image Metadata Cleaner
 
-[![Python](https://img.shields.io/badge/Python-3.9+-blue?logo=python)](https://www.python.org/)
-[![Streamlit](https://img.shields.io/badge/Built%20with-Streamlit-red?logo=streamlit)](https://streamlit.io/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Live App](https://img.shields.io/badge/Live%20Demo-metawiper.streamlit.app-orange?logo=fire)](https://metawiper.streamlit.app)
-[![Stars](https://img.shields.io/github/stars/rootsecops/metawiper?style=social)](https://github.com/rootsecops/metawiper/stargazers)
-[![Forks](https://img.shields.io/github/forks/rootsecops/metawiper?style=social)](https://github.com/rootsecops/metawiper/network/members)
-[![Issues](https://img.shields.io/github/issues/rootsecops/metawiper)](https://github.com/rootsecops/metawiper/issues)
-[![Pull Requests](https://img.shields.io/github/issues-pr/rootsecops/metawiper)](https://github.com/rootsecops/metawiper/pulls)
-[![Contributors](https://img.shields.io/github/contributors/rootsecops/metawiper)](https://github.com/rootsecops/metawiper/graphs/contributors)
+[![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Flask-3.0+-000000?style=flat-square&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
+[![Managed by sonajit.in](https://img.shields.io/badge/Managed%20by-sonajit.in-00f2fe?style=flat-square)](https://sonajit.in)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
 
-> ⚠️ **Disclaimer:** This app works entirely in your browser. No image or data is sent to any server.
+MetaWiper is a modern, high-end web application designed to view and shred hidden EXIF metadata from your images. It focuses on absolute privacy, performing all operations in-memory without ever storing your files on a server.
 
 ---
 
-## 🔗 Live Demo
+## � Preview
 
-🌐 [metawiper.streamlit.app](https://metawiper.streamlit.app)
-
----
-
-## 📑 Table of Contents
-
-- [Features](#-features)
-- [Installation](#-installation)
-- [How to Use](#-how-to-use)
-- [Project Structure](#-project-structure)
-- [Screenshot](#-screenshot)
-- [Tech Stack](#-tech-stack)
-- [Contributing](#-contributing)
-- [License](#-license)
-- [Author](#-author)
+![MetaWiper Modern Glassmorphism UI](assests/Metawiper_preview.png)
 
 ---
 
 ## ✨ Features
 
-- 🖼️ **View Metadata** – Check detailed EXIF metadata (camera, location, device info)
-- 🧹 **Remove Metadata** – One-click metadata stripper for privacy
-- 🔐 **Secure & Local** – No uploads; all operations done locally
-- 📥 **Download Clean Image** – Get a clean, stripped version of your image
-- ⚡ **Fast UI** – Lightweight, responsive, and minimal design
-- 🧠 **EXIF & Hash** – View SHA256 hash of the image
-- 🧾 **EXIF Viewer** – Reads camera model, GPS data, timestamps, etc.
-- 🛠️ **Multi-format Support** – Supports `.jpg`, `.jpeg`, `.png`, `.webp`, etc.
+- 💎 **Modern Glassmorphism UI** – A premium, high-end design with blurred surfaces and smooth micro-interactions.
+- 🖼️ **EXIF Viewer** – Deep extraction of camera models, software versions, and technical apertures.
+- � **GPS Detection** – Automatic mapping of location data to clickable Google Maps links.
+- 🧹 **Instant Shredder** – One-click metadata removal using `piexif` for clean, shareable images.
+- 🔐 **Privacy-First** – No databases, no file storage, and no logs. Processing happens in-memory and is discarded instantly.
+- ⚡ **Multi-File Support** – Batch select files and manage them with an intuitive preview grid.
+- 📱 **Fully Responsive** – Optimized for seamless use on both desktop and mobile devices.
+
+---
+
+## � Live Demo
+
+🌐 [metawiper.sonajit.in](https://metawiper.sonajit.in)
 
 ---
 
 ## 🧰 Installation
 
-### ⚙️ Local Setup
+### ⚙️ Quick Start (Local)
 
-```bash
-git clone https://github.com/rootsecops/metawiper.git
-cd metawiper
-pip install -r requirements.txt
-streamlit run app.py
-````
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/yourusername/metawiper.git
+   cd metawiper
+   ```
 
-> Make sure you’re using Python 3.9+.
+2. **Set up virtual environment (optional but recommended):**
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   ```
 
----
+3. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-## ▶️ How to Use
-
-1. **Upload Image** (from your device)
-2. **View Metadata** (EXIF, hash)
-3. **Strip Metadata** (button click)
-4. **Download Clean Image** (safe to share)
+4. **Run the server:**
+   ```bash
+   python app.py
+   ```
+   Now open `http://localhost:5000` in your browser.
 
 ---
 
 ## 📁 Project Structure
 
-```
+```text
 metawiper/
-├── app.py                      # Main Streamlit app
+├── app.py                # Flask Backend & Routes
 ├── utils/
-│   └── metadata_tools.py       # EXIF view, hash & strip logic
-├── assets/
-│   └── metawiper.streamlit.app.jpeg  # Screenshot
-├── requirements.txt            # Required Python packages
-└── README.md                   # You're here
+│   └── metadata_tools.py # EXIF extraction & stripping logic
+├── static/
+│   ├── style.css         # Modern Glassmorphism Design System
+│   ├── ui.js             # Interaction logic & Micro-animations
+│   └── particles.js      # Background particle engine
+├── templates/
+│   └── index.html        # Main Application Surface
+├── assests/              # Images & Previews
+├── requirements.txt      # Project dependencies
+└── Procfile              # Render.com Deployment Configuration
 ```
-
----
-
-## 📸 Screenshot
-
-![MetaWiper Screenshot](https://raw.githubusercontent.com/rootsecops/metawiper/refs/heads/main/assests/metawiper.streamlit.app.jpeg)
 
 ---
 
 ## ⚒️ Tech Stack
 
-* 🐍 **[Python](https://www.python.org/)** – Backend scripting language.  
-* 🖼️ **[Pillow](https://python-pillow.org/)** – Library for image manipulation and format support.  
-* 📸 **[piexif](https://pypi.org/project/piexif/)** – Extracts or strips EXIF metadata from images.  
-* 🌐 **[Streamlit](https://streamlit.io/)** – Frontend UI framework for building interactive web apps.
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Here’s how you can help:
-
-* 🚀 Fork the repo
-* 🛠️ Create a new branch (`git checkout -b feature-name`)
-* 🧪 Test your changes
-* 🔁 Submit a pull request
+- **Backend:** 🐍 [Flask](https://flask.palletsprojects.com/) (Python)
+- **Processing:** 🖼️ [Pillow](https://python-pillow.org/) & [piexif](https://pypi.org/project/piexif/)
+- **Frontend:** 🌐 Vanilla HTML5, Modern CSS (Glassmorphism), Vanilla JavaScript
+- **Deployment:** 🚀 Render.com with Gunicorn
 
 ---
 
 ## 📜 License
 
-This project is licensed under the **MIT License**.
-You are free to use, modify, and distribute this software.
-
-[Read License »](https://github.com/rootsecops/metawiper/blob/main/LICENSE)
+This project is licensed under the **MIT License**. You are free to use, modify, and distribute this software for personal or commercial use.
 
 ---
 
-## 👤 Author
+## 👤 Managed By
 
-Developed & Maintained by: 
+Developed and Maintained by the team at **[sonajit.in](https://sonajit.in)**.
 
 [![GitHub](https://img.shields.io/badge/GitHub-black?style=for-the-badge&logo=github)](https://github.com/rootsecops0x1)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-blue?style=for-the-badge&logo=linkedin)](https://www.linkedin.com/in/sonajit0x1/)
 
-
 ---
 
-> ❗ **Disclaimer**: No data is uploaded to any server. This tool is purely client-side and ensures your privacy during use.
-
+> ❗ **Privacy Disclaimer**: MetaWiper does not store, log, or transmit your images to any third party. All processing is transient and in-memory.
