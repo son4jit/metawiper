@@ -118,12 +118,9 @@ def handle_exception(e):
         
     return f"Server Error: {str(e)}", 500
 
-# ---- Run locally ----
+# ---- Run ----
 if __name__ == "__main__":
-    app.run(
-        host="0.0.0.0",
-        port=5000,
-        debug=True,
-        threaded=True,
-        use_reloader=True
-    )
+    # In production (Render, etc.), a WSGI server like Gunicorn will use the 'app' object.
+    # This block is only for local development.
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
